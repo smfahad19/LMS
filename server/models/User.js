@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
         return this.authProvider === 'local';
       },
     },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
     authProvider: {
       type: String,
       enum: ['local', 'google'],

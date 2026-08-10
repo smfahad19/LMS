@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const certificateSchema = new mongoose.Schema(
   {
@@ -6,6 +6,7 @@ const certificateSchema = new mongoose.Schema(
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
     certificateId: { type: String, required: true, unique: true },
     certificateUrl: { type: String, default: '' },
+    shareToken: { type: String, unique: true, sparse: true },
     issuedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

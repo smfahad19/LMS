@@ -16,6 +16,7 @@ const quizSchema = new mongoose.Schema(
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
     lesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
     title: { type: String, required: true },
+    maxAttempts: { type: Number, default: 0 },
     questions: [questionSchema],
     passingScore: { type: Number, default: 60 },
   },

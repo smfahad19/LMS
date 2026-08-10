@@ -15,6 +15,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
   const publishedCourses = await Course.countDocuments({ isPublished: true });
   const pendingCourses = await Course.countDocuments({ isPublished: false });
   const totalEnrollments = await Enrollment.countDocuments();
+  
   const totalRevenue = await Payment.aggregate([
     { $match: { status: 'succeeded' } },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -43,7 +44,10 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
         as: 'course',
       },
     },
-    { $unwind: '$course' },
+    
+    // Result mai array aya isi ly usko khtam kr kay object bnanay kay ly unwind use kya
+
+    { $unwind: '$course' }, 
     { $project: { 'course.title': 1, 'course.thumbnail': 1, enrolledCount: 1 } },
   ]);
 

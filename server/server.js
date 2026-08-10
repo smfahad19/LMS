@@ -10,6 +10,11 @@ import errorHandler from './middleware/errorHandler.js';
 
 import authRoutes from './routes/authRoutes.js'
 import adminRoutes from './routes/adminRoutes.js';
+import instructorRoutes from './routes/instructorRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js';
+import { handleWebhook } from './controllers/paymentController.js';
+import studentRoutes from './routes/studentRoutes.js';
+
 
 connectDB();
 
@@ -27,10 +32,20 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/instructor', instructorRoutes);
+app.use('/api/student', studentRoutes);
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  handleWebhook
+);
+
+app.use('/api/payments', paymentRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
