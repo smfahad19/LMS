@@ -14,8 +14,10 @@ import instructorRoutes from './routes/instructorRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js';
 import { handleWebhook } from './controllers/paymentController.js';
 import studentRoutes from './routes/studentRoutes.js';
+import dns from "dns";
+import cookieParser from 'cookie-parser';
 
-
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 connectDB();
 
 const app = express();
@@ -25,6 +27,7 @@ app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'LMS API is running...', status: 'OK' });

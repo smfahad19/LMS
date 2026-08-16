@@ -90,6 +90,7 @@ export const changePassword = asyncHandler(async (req, res) => {
 
   student.password = newPassword;
   await student.save();
+  
 
   res.status(200).json({ message: 'Password changed successfully' });
 });

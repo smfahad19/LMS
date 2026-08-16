@@ -5,6 +5,27 @@ import generateToken from '../utils/generateToken.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const sendTokenResponse = (res, user, statusCode) => {
+  const token = generateToken(user._id);
+
+  res.cookie('token', token, cookieOptions);
+
+  res.status(statusCode).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar,
+  });
+};
+
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -27,14 +48,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     authProvider: 'local',
   });
 
-  res.status(201).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    avatar: user.avatar,
-    token: generateToken(user._id),
-  });
+  sendTokenResponse(res, user, 201);
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
@@ -58,14 +72,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new Error('Invalid email or password');
   }
 
-  res.status(200).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    avatar: user.avatar,
-    token: generateToken(user._id),
-  });
+  sendTokenResponse(res, user, 200);
 });
 
 export const googleAuth = asyncHandler(async (req, res) => {
@@ -101,14 +108,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
     });
   }
 
-  res.status(200).json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    avatar: user.avatar,
-    token: generateToken(user._id),
-  });
+  sendTokenResponse(res, user, 200);
 });
 
 export const getMe = asyncHandler(async (req, res) => {
@@ -134,17 +134,13 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   const updatedUser = await user.save();
 
-  res.status(200).json({
-    _id: updatedUser._id,
-    name: updatedUser.name,
-    email: updatedUser.email,
-    role: updatedUser.role,
-    avatar: updatedUser.avatar,
-    bio: updatedUser.bio,
-    token: generateToken(updatedUser._id),
-  });
+  sendTokenResponse(res, updatedUser, 200);
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
+  res.cookie('token', '', {
+    httpOnly: true,
+    expires: new Date(0),
+  });
   res.status(200).json({ message: 'Logged out successfully' });
 });

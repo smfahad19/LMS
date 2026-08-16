@@ -188,7 +188,7 @@ export const handleWebhook = async (req, res) => {
   }
 
   res.status(200).json({ received: true });
-};
+};  
 
 export const getMyPayments = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
