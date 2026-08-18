@@ -104,10 +104,10 @@ export default function Login() {
                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                 <input
                   type="email"
-                  placeholder="fahad@example.com"
+                  placeholder="learnly@example.com"
                   {...register('email', {
                     required: 'Email is required',
-                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email' },
+                    pattern: { message: 'Invalid email' },
                   })}
                   className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm outline-none transition ${
                     errors.email

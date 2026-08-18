@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FiMenu, FiX, FiLogOut, FiLayout, FiUser, FiChevronDown } from 'react-icons/fi';
 import { logout } from '../../redux/slices/authSlice.js';
 import { toast } from 'sonner';
+import { logoutUser } from '../../services/authService.js';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,12 +16,18 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success('Logged out successfully');
-    navigate('/');
-    setDropdownOpen(false);
-    setMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      dispatch(logout());
+      toast.success('Logged out successfully');
+      navigate('/');
+      setDropdownOpen(false);
+      setMenuOpen(false);
+    }
   };
 
   const getDashboardLink = () => {
@@ -48,7 +55,7 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { label: 'Courses', to: '/courses' },
+    { label: 'Home', to: '/' },
     { label: 'Instructors', to: '/instructors' },
     { label: 'Pricing', to: '/pricing' },
   ];
@@ -62,8 +69,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          {/* Logo — logged in ho to dashboard pe, guest ho to home pe */}
+          <Link
+            to={isAuthenticated ? getDashboardLink() : '/'}
+            onClick={() => {
+              setMenuOpen(false);
+              setDropdownOpen(false);
+            }}
+            className="flex items-center gap-2 group"
+          >
             <div className="relative w-9 h-9">
               <div className="absolute inset-0 bg-blue-600 rounded-xl rotate-6 group-hover:rotate-12 transition-transform duration-300" />
               <div className="absolute inset-0 bg-blue-500 rounded-xl flex items-center justify-center">
@@ -189,11 +203,7 @@ export default function Navbar() {
             className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            <span
-              className={`transition-all duration-200 ${
-                menuOpen ? 'rotate-90 opacity-100' : 'rotate-0 opacity-100'
-              }`}
-            >
+            <span className={`transition-all duration-200 ${menuOpen ? 'rotate-90' : 'rotate-0'}`}>
               {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </span>
           </button>
@@ -240,12 +250,14 @@ export default function Navbar() {
                 </div>
                 <Link
                   to={getDashboardLink()}
+                  onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 text-sm text-gray-600 py-2.5 px-3 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <FiLayout size={14} className="text-blue-500" /> Dashboard
                 </Link>
                 <Link
                   to={`/${user?.role}/profile`}
+                  onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 text-sm text-gray-600 py-2.5 px-3 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <FiUser size={14} className="text-blue-500" /> Profile

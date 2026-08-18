@@ -9,6 +9,7 @@ import Home from './pages/public/Home.jsx';
 import Login from './pages/auth/Login.jsx';
 import Register from './pages/auth/Register.jsx';
 import NotFound from './pages/error/NotFound.jsx';
+import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 
 function App() {
   const dispatch = useDispatch();
@@ -33,6 +34,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
