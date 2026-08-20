@@ -8,7 +8,6 @@ import {
 import { toast } from 'sonner';
 import { setCredentials } from '../../redux/slices/authSlice.js';
 import { updateAdminProfile } from '../../services/adminService.js';
-import { getMediaUrl } from '../../utils/media.js';
 
 const tabs = ['Profile', 'Security'];
 
@@ -42,32 +41,32 @@ export default function AdminProfile() {
     formState: { errors: passwordErrors },
   } = useForm();
 
- const handleAvatarChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) {
-    toast.error('Image must be less than 5MB');
-    return;
-  }
-  const formData = new FormData();
-  formData.append('avatar', file);
-  try {
-    setAvatarLoading(true);
-    const updatedUser = await updateAdminProfile(formData);
-    dispatch(setCredentials(updatedUser));
-    toast.success('Avatar updated');
-  } catch {
-    toast.error('Failed to update avatar');
-  } finally {
-    setAvatarLoading(false);
-  }
-};
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('avatar', file);
+    try {
+      setAvatarLoading(true);
+      const updatedUser = await updateAdminProfile(formData);
+      dispatch(setCredentials(updatedUser));
+      toast.success('Avatar updated');
+    } catch {
+      toast.error('Failed to update avatar');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   const onProfileSubmit = async (data) => {
     try {
       setProfileLoading(true);
-      const user = await updateAdminProfile(data);
-      dispatch(setCredentials(user));
+      const updatedUser = await updateAdminProfile(data);
+      dispatch(setCredentials(updatedUser));
       toast.success('Profile updated successfully');
     } catch {
       toast.error('Failed to update profile');
@@ -92,10 +91,11 @@ export default function AdminProfile() {
     }
   };
 
+  const isGoogleUser = user?.authProvider === 'google' || !user?.authProvider;
+
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center gap-3">
@@ -113,18 +113,14 @@ export default function AdminProfile() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Left — Avatar Card */}
           <div className="lg:col-span-1">
             <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
               <div className="relative inline-block mb-4">
                 {user?.avatar ? (
                   <img
-                    src={getMediaUrl(user.avatar)}
+                    src={user.avatar}
                     alt={user.name}
                     className="w-24 h-24 rounded-2xl object-cover mx-auto"
-                    onError={(event) => {
-                      event.currentTarget.style.display = 'none';
-                    }}
                   />
                 ) : (
                   <div className="w-24 h-24 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto">
@@ -171,27 +167,22 @@ export default function AdminProfile() {
             </div>
           </div>
 
-          {/* Right — Tabs */}
           <div className="lg:col-span-2">
-
-            {/* Tab Switcher */}
             <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5">
               {tabs.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                    activeTab === tab
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${activeTab === tab
                       ? 'bg-white text-gray-900 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>
               ))}
             </div>
 
-            {/* Profile Tab */}
             {activeTab === 'Profile' && (
               <div className="bg-white border border-gray-200 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
@@ -201,9 +192,7 @@ export default function AdminProfile() {
 
                 <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Full Name
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
                     <div className="relative">
                       <FiUser size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
@@ -212,22 +201,15 @@ export default function AdminProfile() {
                           required: 'Name is required',
                           minLength: { value: 2, message: 'Minimum 2 characters' },
                         })}
-                        className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm outline-none transition ${
-                          profileErrors.name
-                            ? 'border-red-300 bg-red-50'
-                            : 'border-gray-200 focus:border-blue-400'
-                        }`}
+                        className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm outline-none transition ${profileErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                          }`}
                       />
                     </div>
-                    {profileErrors.name && (
-                      <p className="text-red-500 text-xs mt-1">{profileErrors.name.message}</p>
-                    )}
+                    {profileErrors.name && <p className="text-red-500 text-xs mt-1">{profileErrors.name.message}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Email Address
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
                     <div className="relative">
                       <FiMail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
@@ -241,9 +223,7 @@ export default function AdminProfile() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Bio
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Bio</label>
                     <textarea
                       rows={4}
                       {...registerProfile('bio')}
@@ -263,7 +243,6 @@ export default function AdminProfile() {
               </div>
             )}
 
-            {/* Security Tab */}
             {activeTab === 'Security' && (
               <div className="bg-white border border-gray-200 rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
@@ -271,7 +250,7 @@ export default function AdminProfile() {
                   <h2 className="text-sm font-bold text-gray-900">Change Password</h2>
                 </div>
 
-                {user?.authProvider === 'google' ? (
+                {isGoogleUser ? (
                   <div className="text-center py-8">
                     <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <FiLock size={20} className="text-gray-400" />
@@ -284,40 +263,25 @@ export default function AdminProfile() {
                 ) : (
                   <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Current Password
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
                       <div className="relative">
                         <FiLock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type={showCurrent ? 'text' : 'password'}
                           placeholder="••••••••"
-                          {...registerPassword('currentPassword', {
-                            required: 'Current password is required',
-                          })}
-                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${
-                            passwordErrors.currentPassword
-                              ? 'border-red-300 bg-red-50'
-                              : 'border-gray-200 focus:border-blue-400'
-                          }`}
+                          {...registerPassword('currentPassword', { required: 'Current password is required' })}
+                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${passwordErrors.currentPassword ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                            }`}
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrent(!showCurrent)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
+                        <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showCurrent ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                         </button>
                       </div>
-                      {passwordErrors.currentPassword && (
-                        <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword.message}</p>
-                      )}
+                      {passwordErrors.currentPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword.message}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        New Password
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
                       <div className="relative">
                         <FiLock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -327,29 +291,18 @@ export default function AdminProfile() {
                             required: 'New password is required',
                             minLength: { value: 6, message: 'Minimum 6 characters' },
                           })}
-                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${
-                            passwordErrors.newPassword
-                              ? 'border-red-300 bg-red-50'
-                              : 'border-gray-200 focus:border-blue-400'
-                          }`}
+                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${passwordErrors.newPassword ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                            }`}
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowNew(!showNew)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
+                        <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showNew ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                         </button>
                       </div>
-                      {passwordErrors.newPassword && (
-                        <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword.message}</p>
-                      )}
+                      {passwordErrors.newPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword.message}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Confirm New Password
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
                       <div className="relative">
                         <FiLock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -357,26 +310,16 @@ export default function AdminProfile() {
                           placeholder="Re-enter new password"
                           {...registerPassword('confirmPassword', {
                             required: 'Please confirm your password',
-                            validate: (val) =>
-                              val === watch('newPassword') || 'Passwords do not match',
+                            validate: (val) => val === watch('newPassword') || 'Passwords do not match',
                           })}
-                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${
-                            passwordErrors.confirmPassword
-                              ? 'border-red-300 bg-red-50'
-                              : 'border-gray-200 focus:border-blue-400'
-                          }`}
+                          className={`w-full pl-9 pr-10 py-2.5 border rounded-xl text-sm outline-none transition ${passwordErrors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+                            }`}
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirm(!showConfirm)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
+                        <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {showConfirm ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                         </button>
                       </div>
-                      {passwordErrors.confirmPassword && (
-                        <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword.message}</p>
-                      )}
+                      {passwordErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword.message}</p>}
                     </div>
 
                     <button

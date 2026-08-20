@@ -30,7 +30,7 @@ export default function Register() {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      const { confirmPassword, ...rest } = data;
+      const { ...rest } = data;
       const user = await registerUser(rest);
       dispatch(setCredentials(user));
       toast.success(`Welcome to Learnly, ${user.name}!`);

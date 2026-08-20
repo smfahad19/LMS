@@ -107,7 +107,7 @@ export default function Login() {
                   placeholder="learnly@example.com"
                   {...register('email', {
                     required: 'Email is required',
-                    pattern: { message: 'Invalid email' },
+                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email' },
                   })}
                   className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm outline-none transition ${
                     errors.email

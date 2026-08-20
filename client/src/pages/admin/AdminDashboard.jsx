@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   ];
 
   const quickActions = [
-    { label: 'Manage Users', to: '/admin/users', icon: <FiUsers size={15} />, desc: 'View and manage all users' },
+    { label: 'Manage Users', to: '/admin/manage-users', icon: <FiUsers size={15} />, desc: 'View and manage all users' },
     { label: 'Manage Courses', to: '/admin/courses', icon: <FiBookOpen size={15} />, desc: 'Review and publish courses' },
     { label: 'Payments', to: '/admin/payments', icon: <FiDollarSign size={15} />, desc: 'View all transactions' },
     { label: 'Enrollments', to: '/admin/enrollments', icon: <FiTrendingUp size={15} />, desc: 'Manage student enrollments' },
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
                 <FiUsers size={15} className="text-gray-400" />
                 <h2 className="text-sm font-bold text-gray-900">Recent Users</h2>
               </div>
-              <Link to="/admin/users" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
+              <Link to="/admin/manage-users" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
                 View all <FiChevronRight size={12} />
               </Link>
             </div>

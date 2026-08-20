@@ -12,6 +12,7 @@ import Register from './pages/auth/Register.jsx';
 import NotFound from './pages/error/NotFound.jsx';
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminProfile from './pages/admin/AdminProfile.jsx';
+import ManageUsers from './pages/admin/ManageUsers.jsx';
 
 function App() {
   const dispatch = useDispatch();
@@ -54,6 +55,12 @@ function App() {
           <Route path="/admin/profile" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminProfile />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/manage-users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ManageUsers />
             </ProtectedRoute>
           } />
 
