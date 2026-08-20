@@ -5,6 +5,14 @@ export const getDashboardStats = async () => {
   return res.data;
 };
 
+export const updateAdminProfile = async (data) => {
+  const isFormData = data instanceof FormData;
+  const res = await api.put('/admin/profile', data, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
+  return res.data;
+};
+
 export const getAllUsers = async (params) => {
   const res = await api.get('/admin/users', { params });
   return res.data;

@@ -116,27 +116,6 @@ export const getMe = asyncHandler(async (req, res) => {
   res.status(200).json(user);
 });
 
-export const updateProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-
-  if (!user) {
-    res.status(404);
-    throw new Error('User not found');
-  }
-
-  user.name = req.body.name || user.name;
-  user.bio = req.body.bio || user.bio;
-  user.avatar = req.body.avatar || user.avatar;
-
-  if (req.body.password && user.authProvider === 'local') {
-    user.password = req.body.password;
-  }
-
-  const updatedUser = await user.save();
-
-  sendTokenResponse(res, updatedUser, 200);
-});
-
 export const logoutUser = asyncHandler(async (req, res) => {
   res.cookie('token', '', {
     httpOnly: true,

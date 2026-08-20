@@ -1,6 +1,10 @@
 import express from 'express';
+import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 import {
   getDashboardStats,
+  updateAdminProfile,
   getAllUsers,
   getUserById,
   updateUserByAdmin,
@@ -30,9 +34,27 @@ import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'lms/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+  },
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    if (file.mimetype.startsWith('image/')) callback(null, true);
+    else callback(new Error('Only image files are allowed'));
+  },
+});
+
 router.use(protect, authorizeRoles('admin'));
 
 router.get('/stats', getDashboardStats);
+router.put('/profile', uploadAvatar.single('avatar'), updateAdminProfile);
 
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);

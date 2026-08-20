@@ -5,6 +5,7 @@ import { FiMenu, FiX, FiLogOut, FiLayout, FiUser, FiChevronDown } from 'react-ic
 import { logout } from '../../redux/slices/authSlice.js';
 import { toast } from 'sonner';
 import { logoutUser } from '../../services/authService.js';
+import { getMediaUrl } from '../../utils/media.js';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,12 +120,12 @@ export default function Navbar() {
                 >
                   {user?.avatar ? (
                     <img
-                      src={user.avatar}
+                      src={getMediaUrl(user.avatar)}
                       alt={user.name}
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-100"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -237,9 +238,16 @@ export default function Navbar() {
               <>
                 <div className="flex items-center gap-2.5 px-3 py-2">
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                    <img
+                      src={getMediaUrl(user.avatar)}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                      }}
+                    />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
                   )}

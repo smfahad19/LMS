@@ -77,6 +77,47 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
   });
 });
 
+export const updateAdminProfile = asyncHandler(async (req, res) => {
+  const admin = await User.findById(req.user._id);
+  if (!admin) {
+    res.status(404);
+    throw new Error('Admin not found');
+  }
+
+  if (req.body.name) admin.name = req.body.name;
+  if (req.body.bio !== undefined) admin.bio = req.body.bio;
+
+  if (req.file && req.file.path) {
+    admin.avatar = req.file.path;
+  }
+
+  if (req.body.password) {
+    if (!req.body.currentPassword) {
+      res.status(400);
+      throw new Error('Current password is required');
+    }
+    const isMatch = await admin.matchPassword(req.body.currentPassword);
+    if (!isMatch) {
+      res.status(401);
+      throw new Error('Current password is incorrect');
+    }
+    admin.password = req.body.password;
+  }
+
+  await admin.save();
+
+  const updated = await User.findById(req.user._id).select('-password');
+
+  res.status(200).json({
+    _id: updated._id,
+    name: updated.name,
+    email: updated.email,
+    role: updated.role,
+    avatar: updated.avatar,
+    bio: updated.bio,
+  });
+});
+
 export const getAllUsers = asyncHandler(async (req, res) => {
   const { role, page = 1, limit = 10, search, isBanned } = req.query;
 

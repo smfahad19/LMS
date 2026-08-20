@@ -210,7 +210,7 @@ export default function Home() {
                 <ul className="space-y-2">
                   {item.checks.map((c, j) => (
                     <li key={j} className="flex items-center gap-2 text-sm text-gray-600">
-                      <FiCheck className="text-blue-600 flex-shrink-0" size={14} />
+                      <FiCheck className="text-blue-600 min-w-3.5" size={14} />
                       {c}
                     </li>
                   ))}
@@ -243,7 +243,7 @@ export default function Home() {
                 </div>
                 <p className="text-gray-700 text-sm leading-relaxed mb-6">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  <div className="w-9 h-9 min-w-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
                     {t.initials}
                   </div>
                   <div>
