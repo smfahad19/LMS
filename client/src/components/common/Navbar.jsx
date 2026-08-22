@@ -12,7 +12,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,11 +55,31 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
+  const guestNavLinks = [
     { label: 'Home', to: '/' },
     { label: 'Instructors', to: '/instructors' },
     { label: 'Pricing', to: '/pricing' },
   ];
+
+  const roleNavLinks = {
+    admin: [
+      { label: 'Dashboard', to: '/admin/dashboard' },
+      { label: 'Manage Users', to: '/admin/manage-users' },
+      { label: 'Profile', to: '/admin/profile' },
+    ],
+    instructor: [
+      { label: 'Dashboard', to: '/instructor/dashboard' },
+      { label: 'Profile', to: '/instructor/profile' },
+    ],
+    student: [
+      { label: 'Dashboard', to: '/student/dashboard' },
+      { label: 'Profile', to: '/student/profile' },
+    ],
+  };
+
+  const navLinks = isAuthenticated
+    ? roleNavLinks[user?.role] || []
+    : guestNavLinks;
 
   return (
     <nav
@@ -112,7 +132,7 @@ export default function Navbar() {
 
           {/* Desktop Auth */}
           <div className="hidden md:flex items-center gap-2">
-            {isAuthenticated ? (
+            {!isLoading && isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -181,7 +201,7 @@ export default function Navbar() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : !isLoading ? (
               <>
                 <Link
                   to="/login"
@@ -196,7 +216,7 @@ export default function Navbar() {
                   Get Started →
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile Button */}
@@ -234,7 +254,7 @@ export default function Navbar() {
           ))}
 
           <div className="border-t border-gray-100 pt-2 mt-1 flex flex-col gap-1">
-            {isAuthenticated ? (
+            {!isLoading && isAuthenticated ? (
               <>
                 <div className="flex items-center gap-2.5 px-3 py-2">
                   {user?.avatar ? (
@@ -277,7 +297,7 @@ export default function Navbar() {
                   <FiLogOut size={14} /> Logout
                 </button>
               </>
-            ) : (
+            ) : !isLoading ? (
               <>
                 <Link
                   to="/login"
@@ -292,7 +312,7 @@ export default function Navbar() {
                   Get Started →
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

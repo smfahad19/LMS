@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { FiTwitter, FiLinkedin, FiGithub } from 'react-icons/fi';
 
 const socials = [
@@ -7,12 +8,11 @@ const socials = [
   { icon: <FiGithub size={15} />, href: 'https://github.com/smfahad19' },
 ];
 
-const footerLinks = {
+const sharedFooterLinks = {
   Platform: [
     { label: 'Browse Courses', to: '/courses' },
     { label: 'Instructors', to: '/instructors' },
     { label: 'Pricing', to: '/pricing' },
-    { label: 'Become an Instructor', to: '/register' },
   ],
   Company: [
     { label: 'About Us', to: '/about' },
@@ -28,7 +28,54 @@ const footerLinks = {
   ],
 };
 
+const roleFooterLinks = {
+  admin: {
+    Admin: [
+      { label: 'Dashboard', to: '/admin/dashboard' },
+      { label: 'Manage Users', to: '/admin/manage-users' },
+      { label: 'Manage Courses', to: '/admin/manage-courses' },
+      { label: 'Pending Courses', to: '/admin/pending-courses' },
+      { label: 'Manage Payments', to: '/admin/manage-payments' },
+      { label: 'Manage Reviews', to: '/admin/manage-reviews' },
+      { label: 'Profile', to: '/admin/profile' },
+    ],
+  },
+  instructor: {
+    Teaching: [
+      { label: 'Dashboard', to: '/instructor/dashboard' },
+      { label: 'My Courses', to: '/instructor/courses' },
+      { label: 'Create Course', to: '/instructor/create-course' },
+      { label: 'Profile', to: '/instructor/profile' },
+    ],
+  },
+  student: {
+    Learning: [
+      { label: 'Dashboard', to: '/student/dashboard' },
+      { label: 'My Learning', to: '/student/courses' },
+      { label: 'Browse Courses', to: '/courses' },
+      { label: 'Profile', to: '/student/profile' },
+    ],
+  },
+};
+
 export default function Footer() {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { pathname } = useLocation();
+
+  if (isAuthenticated && ['/admin/dashboard', '/instructor/dashboard', '/student/dashboard'].includes(pathname)) {
+    return null;
+  }
+
+  const footerLinks = isAuthenticated
+    ? { ...(roleFooterLinks[user?.role] || {}), ...sharedFooterLinks }
+    : {
+        ...sharedFooterLinks,
+        Platform: [
+          ...sharedFooterLinks.Platform.map((link) => ({ ...link, to: '/register' })),
+          { label: 'Become an Instructor', to: '/register' },
+        ],
+      };
+
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -45,7 +45,7 @@ export default function AdminDashboard() {
       value: stats?.totalStudents || 0,
       icon: <FiUsers size={18} />,
       iconBg: 'bg-blue-100 text-blue-600',
-      link: '/admin/users?role=student',
+      link: '/admin/manage-users?role=student',
       change: 'Active learners',
     },
     {
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       value: stats?.totalInstructors || 0,
       icon: <FiUserCheck size={18} />,
       iconBg: 'bg-violet-100 text-violet-600',
-      link: '/admin/users?role=instructor',
+      link: '/admin/manage-users?role=instructor',
       change: 'Course creators',
     },
     {
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
       value: stats?.totalCourses || 0,
       icon: <FiBookOpen size={18} />,
       iconBg: 'bg-emerald-100 text-emerald-600',
-      link: '/admin/courses',
+      link: '/admin/manage-courses',
       change: `${stats?.publishedCourses || 0} published`,
     },
     {
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       value: `$${((stats?.totalRevenue || 0) / 100).toFixed(2)}`,
       icon: <FiDollarSign size={18} />,
       iconBg: 'bg-amber-100 text-amber-600',
-      link: '/admin/payments',
+      link: '/admin/',
       change: 'All time earnings',
     },
     {
@@ -77,25 +77,25 @@ export default function AdminDashboard() {
       value: stats?.totalEnrollments || 0,
       icon: <FiTrendingUp size={18} />,
       iconBg: 'bg-orange-100 text-orange-600',
-      link: '/admin/enrollments',
+      link: '/admin/manage-enrollments',
       change: 'Total enrollments',
     },
     {
-      label: 'Pending Review',
+      label: 'Pending Courses',
       value: stats?.pendingCourses || 0,
       icon: <FiClock size={18} />,
       iconBg: 'bg-red-100 text-red-600',
-      link: '/admin/courses?isPublished=false',
+      link: '/admin/pending-courses',
       change: 'Awaiting approval',
     },
   ];
 
   const quickActions = [
     { label: 'Manage Users', to: '/admin/manage-users', icon: <FiUsers size={15} />, desc: 'View and manage all users' },
-    { label: 'Manage Courses', to: '/admin/courses', icon: <FiBookOpen size={15} />, desc: 'Review and publish courses' },
-    { label: 'Payments', to: '/admin/payments', icon: <FiDollarSign size={15} />, desc: 'View all transactions' },
-    { label: 'Enrollments', to: '/admin/enrollments', icon: <FiTrendingUp size={15} />, desc: 'Manage student enrollments' },
-    { label: 'Reviews', to: '/admin/reviews', icon: <FiStar size={15} />, desc: 'Moderate course reviews' },
+    { label: 'Manage Courses', to: '/admin/manage-courses', icon: <FiBookOpen size={15} />, desc: 'Review and publish courses' },
+    { label: 'Payments', to: '/admin/manage-payments', icon: <FiDollarSign size={15} />, desc: 'View all transactions' },
+    { label: 'Enrollments', to: '/admin/manage-enrollments', icon: <FiTrendingUp size={15} />, desc: 'Manage student enrollments' },
+    { label: 'Reviews', to: '/admin/manage-reviews', icon: <FiStar size={15} />, desc: 'Moderate course reviews' },
     { label: 'Certificates', to: '/admin/certificates', icon: <FiActivity size={15} />, desc: 'Manage certificates' },
   ];
 
