@@ -210,7 +210,7 @@ export const getMyCourses = asyncHandler(async (req, res) => {
 
   const total = await Course.countDocuments(query);
   const courses = await Course.find(query)
-    .select('title thumbnail category difficulty isPublished isFeatured ratingAvg enrolledCount rejectionReason createdAt')
+    .select('title thumbnail category difficulty price isPublished isFeatured publishRequested ratingAvg enrolledCount rejectionReason createdAt')
     .skip((page - 1) * limit)
     .limit(Number(limit))
     .sort({ createdAt: -1 });

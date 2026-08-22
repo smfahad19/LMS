@@ -18,6 +18,10 @@ import ManageEnrollments from './pages/admin/ManageEnrollments.jsx';
 import ManagePayments from './pages/admin/ManagePayments.jsx';
 import ManageReviews from './pages/admin/ManageReviews.jsx';
 import PendingCourses from './pages/admin/PendingCourses.jsx';
+import InstructorDashboard from './pages/instructor/InstructorDashboard.jsx';
+import MyCourses from './pages/instructor/MyCourses.jsx';
+import CreateCourse from './pages/instructor/CreateCourse.jsx';
+import ManageCourse from './pages/instructor/ManageCourse.jsx';
 
 const getDashboardForRole = (role) => {
   if (role === 'admin') return '/admin/dashboard';
@@ -86,35 +90,55 @@ function App() {
 
           <Route path="/admin/manage-courses" element={
             <ProtectedRoute allowedRoles={['admin']}>
-                <ManageCourses />
-        </ProtectedRoute>
+              <ManageCourses />
+            </ProtectedRoute>
           } />
           <Route path="/admin/manage-enrollments" element={
             <ProtectedRoute allowedRoles={['admin']}>
-                <ManageEnrollments />
+              <ManageEnrollments />
             </ProtectedRoute>
           } />
 
-           <Route path="/admin/manage-payments" element={
+          <Route path="/admin/manage-payments" element={
             <ProtectedRoute allowedRoles={['admin']}>
-                <ManagePayments />
+              <ManagePayments />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/manage-reviews" element={
             <ProtectedRoute allowedRoles={['admin']}>
-                <ManageReviews />
+              <ManageReviews />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/pending-courses" element={
             <ProtectedRoute allowedRoles={['admin']}>
-                <PendingCourses />
+              <PendingCourses />
             </ProtectedRoute>
           } />
 
           {/* Instructor */}
+          <Route path="/instructor/dashboard" element={
+            <ProtectedRoute allowedRoles={['instructor']}>
+              <InstructorDashboard />
+            </ProtectedRoute>
+          } />
 
+          <Route path="/instructor/courses" element={
+            <ProtectedRoute allowedRoles={['instructor']}>
+              <MyCourses />
+            </ProtectedRoute>
+          } />
+          <Route path="/instructor/courses/create" element={
+            <ProtectedRoute allowedRoles={['instructor']}>
+              <CreateCourse />
+            </ProtectedRoute>
+          } />
+          <Route path="/instructor/courses/:id" element={
+            <ProtectedRoute allowedRoles={['instructor']}>
+              <ManageCourse />
+            </ProtectedRoute>
+          } />
 
           {/* Student */}
 

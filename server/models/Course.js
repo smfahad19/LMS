@@ -12,6 +12,7 @@ const courseSchema = new mongoose.Schema(
             default: 'Beginner',
         },
         isFeatured: { type: Boolean, default: false },
+        publishRequested: { type: Boolean, default: false },
         rejectionReason: { type: String, default: null },
         thumbnail: { type: String, default: '' },
         price: { type: Number, default: 0 },
