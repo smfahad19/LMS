@@ -45,8 +45,6 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
       },
     },
     
-    // Result mai array aya isi ly usko khtam kr kay object bnanay kay ly unwind use kya
-
     { $unwind: '$course' }, 
     { $project: { 'course.title': 1, 'course.thumbnail': 1, enrolledCount: 1 } },
   ]);
