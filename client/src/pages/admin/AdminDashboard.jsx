@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       value: `$${((stats?.totalRevenue || 0) / 100).toFixed(2)}`,
       icon: <FiDollarSign size={18} />,
       iconBg: 'bg-amber-100 text-amber-600',
-      link: '/admin/',
+      link: '/admin/manage-payments',
       change: 'All time earnings',
     },
     {
