@@ -100,6 +100,11 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     throw new Error('Payment record not found');
   }
 
+  if (payment.student.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error('You are not authorized to verify this payment');
+  }
+
   if (payment.status === 'succeeded') {
     const enrollment = await Enrollment.findOne({
       student: payment.student,
@@ -111,10 +116,11 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   payment.status = 'succeeded';
   await payment.save();
 
-  const enrollment = await Enrollment.create({
-    student: payment.student,
-    course: payment.course,
-  });
+  const enrollment = await Enrollment.findOneAndUpdate(
+    { student: payment.student, course: payment.course },
+    { $setOnInsert: { student: payment.student, course: payment.course } },
+    { new: true, upsert: true }
+  );
 
   await Course.findByIdAndUpdate(payment.course, {
     $inc: { enrolledCount: 1 },

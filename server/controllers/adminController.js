@@ -5,7 +5,6 @@ import Enrollment from '../models/Enrollment.js';
 import Payment from '../models/Payment.js';
 import Certificate from '../models/Certificate.js';
 import Review from '../models/Review.js';
-import Quiz from '../models/Quiz.js';
 import bcrypt from 'bcryptjs';
 
 export const getDashboardStats = asyncHandler(async (req, res) => {

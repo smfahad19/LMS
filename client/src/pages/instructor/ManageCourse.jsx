@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   FiBookOpen, FiUpload, FiTrash2, FiPlus,
   FiPlay, FiSend, FiX, FiSave, FiUsers,
-  FiStar, FiAlertCircle
+  FiStar, FiAlertCircle, FiCheck
 } from 'react-icons/fi';
 import { toast } from 'sonner';
 import api from '../../services/api.js';
 import {
   addLesson, deleteLesson,
-  createQuiz, requestPublish
+  createQuiz, requestPublish, closeCourse
 } from '../../services/instructorService.js';
 
 const tabs = ['Overview', 'Lessons', 'Quiz', 'Students'];
@@ -62,7 +62,7 @@ function ManageCourse() {
 
   const fetchStudents = useCallback(async () => {
     try {
-      const res = await api.get(`/instructor/courses/${id}/students`);
+      const res = await api.get(`/instructor/courses/${id}/students`, { params: { page: 1, limit: 100 } });
       setStudents(res.data.enrollments);
     } catch {
       toast.error('Failed to load students');
@@ -134,6 +134,20 @@ function ManageCourse() {
       fetchCourse();
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCloseCourse = async () => {
+    if (!window.confirm('Close this course and issue certificates to completed students?')) return;
+    try {
+      setActionLoading(true);
+      const response = await closeCourse(id);
+      toast.success(response.message || 'Course closed');
+      fetchCourse();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to close course');
     } finally {
       setActionLoading(false);
     }
@@ -227,16 +241,16 @@ function ManageCourse() {
               </div>
             </div>
 
-            {!course.isPublished && !course.publishRequested && lessons.length > 0 && (
-              <button
-                onClick={handlePublishRequest}
-                disabled={actionLoading}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition"
-              >
-                <FiSend size={13} />
-                Submit for Review
-              </button>
-            )}
+            <div className="flex flex-wrap justify-end gap-2">
+              <Link to={`/instructor/courses/${id}/students`} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-blue-300 hover:text-blue-600"><FiUsers size={13} />View Students</Link>
+              {!course.isPublished && !course.publishRequested && lessons.length > 0 && (
+                <button onClick={handlePublishRequest} disabled={actionLoading} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition"><FiSend size={13} />Submit for Review</button>
+              )}
+              {!course.isClosed && course.isPublished && (
+                <button onClick={handleCloseCourse} disabled={actionLoading} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition"><FiCheck size={13} />Close Course</button>
+              )}
+              {course.isClosed && <span className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700">Course closed</span>}
+            </div>
           </div>
 
           {course.rejectionReason && (

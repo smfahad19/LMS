@@ -143,7 +143,7 @@ function InstructorDashboard() {
             <div className="divide-y divide-gray-50">
               {stats?.recentEnrollments?.length > 0 ? (
                 stats.recentEnrollments.map((enrollment) => (
-                  <div key={enrollment._id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+                  <Link key={enrollment._id} to={`/instructor/courses/${enrollment.course?._id}/students`} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
                     {enrollment.student?.avatar ? (
                       <img src={enrollment.student.avatar} alt={enrollment.student.name} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
@@ -158,7 +158,7 @@ function InstructorDashboard() {
                     <span className="text-xs text-gray-400">
                       {new Date(enrollment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <div className="px-5 py-8 text-center">

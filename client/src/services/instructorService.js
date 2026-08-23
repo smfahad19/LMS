@@ -77,3 +77,13 @@ export const withdrawEarnings = async () => {
   const res = await api.post('/instructor/stripe/withdraw');
   return res.data;
 };
+
+export const closeCourse = async (id) => {
+  const res = await api.put(`/instructor/courses/${id}/close`);
+  return res.data;
+};
+
+export const issueStudentCertificate = async (courseId, studentId) => {
+  const res = await api.post(`/instructor/courses/${courseId}/students/${studentId}/certificate`);
+  return res.data;
+};

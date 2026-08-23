@@ -51,7 +51,7 @@ const roleFooterLinks = {
   student: {
     Learning: [
       { label: 'Dashboard', to: '/student/dashboard' },
-      { label: 'My Learning', to: '/student/courses' },
+      { label: 'My Learning', to: '/student/my-courses' },
       { label: 'Browse Courses', to: '/courses' },
       { label: 'Profile', to: '/student/profile' },
     ],

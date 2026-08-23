@@ -96,10 +96,16 @@ export const changePassword = asyncHandler(async (req, res) => {
 });
 
 export const getStudentDashboard = asyncHandler(async (req, res) => {
-  const totalEnrolled = await Enrollment.countDocuments({ student: req.user._id });
-  const completed = await Enrollment.countDocuments({ student: req.user._id, isCompleted: true });
+  const studentEnrollments = await Enrollment.find({ student: req.user._id });
+  await Promise.all(studentEnrollments.map((enrollment) => refreshEnrollmentProgress(enrollment)));
+
+  const totalEnrolled = studentEnrollments.length;
+  const completed = studentEnrollments.filter((enrollment) => enrollment.isCompleted).length;
   const inProgress = totalEnrolled - completed;
-  const totalCertificates = await Certificate.countDocuments({ student: req.user._id });
+  const studentCertificates = await Certificate.find({ student: req.user._id })
+    .populate('course', 'isClosed')
+    .select('course');
+  const totalCertificates = studentCertificates.filter((certificate) => certificate.course?.isClosed).length;
 
   const recentEnrollments = await Enrollment.find({ student: req.user._id })
     .populate({
@@ -139,6 +145,24 @@ export const getStudentDashboard = asyncHandler(async (req, res) => {
     unreadNotifications,
   });
 });
+
+const refreshEnrollmentProgress = async (enrollment) => {
+  const totalLessons = await Lesson.countDocuments({ course: enrollment.course });
+  const completedLessons = await Lesson.countDocuments({
+    _id: { $in: enrollment.completedLessons },
+    course: enrollment.course,
+  });
+  const completionPercentage = totalLessons > 0
+    ? Math.round((completedLessons / totalLessons) * 100)
+    : 0;
+  const isCompleted = totalLessons > 0 && completionPercentage === 100;
+
+  if (enrollment.completionPercentage !== completionPercentage || enrollment.isCompleted !== isCompleted) {
+    enrollment.completionPercentage = completionPercentage;
+    enrollment.isCompleted = isCompleted;
+    await enrollment.save();
+  }
+};
 
 export const getAllCourses = asyncHandler(async (req, res) => {
   const { search, category, difficulty, minPrice, maxPrice, rating, page = 1, limit = 12 } = req.query;
@@ -271,26 +295,30 @@ export const getMyEnrolledCourses = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, status } = req.query;
 
   const query = { student: req.user._id };
-  if (status === 'completed') query.isCompleted = true;
-  if (status === 'inprogress') query.isCompleted = false;
 
-  const total = await Enrollment.countDocuments(query);
   const enrollments = await Enrollment.find(query)
     .populate({
       path: 'course',
       select: 'title thumbnail instructor category difficulty duration',
       populate: { path: 'instructor', select: 'name avatar' },
     })
-    .select('course completionPercentage isCompleted lastWatchedLesson lastWatchedTime createdAt')
-    .skip((page - 1) * limit)
-    .limit(Number(limit))
+    .select('course completionPercentage isCompleted completedLessons lastWatchedLesson lastWatchedTime createdAt')
     .sort({ updatedAt: -1 });
 
+  await Promise.all(enrollments.map((enrollment) => refreshEnrollmentProgress(enrollment)));
+  const filteredEnrollments = status === 'completed'
+    ? enrollments.filter((enrollment) => enrollment.isCompleted)
+    : status === 'inprogress'
+      ? enrollments.filter((enrollment) => !enrollment.isCompleted)
+      : enrollments;
+  const start = (Number(page) - 1) * Number(limit);
+  const paginatedEnrollments = filteredEnrollments.slice(start, start + Number(limit));
+
   res.status(200).json({
-    total,
+    total: filteredEnrollments.length,
     page: Number(page),
-    totalPages: Math.ceil(total / limit),
-    enrollments,
+    totalPages: Math.ceil(filteredEnrollments.length / Number(limit)),
+    enrollments: paginatedEnrollments,
   });
 });
 
@@ -343,12 +371,14 @@ export const getLessonToWatch = asyncHandler(async (req, res) => {
     throw new Error('Lesson not found');
   }
 
+  const isResumingLesson = enrollment.lastWatchedLesson?.toString() === lesson._id.toString();
+  const lessonLastWatchedTime = isResumingLesson ? enrollment.lastWatchedTime || 0 : 0;
   enrollment.lastWatchedLesson = lesson._id;
   await enrollment.save();
 
   res.status(200).json({
     lesson,
-    lastWatchedTime: enrollment.lastWatchedTime || 0,
+    lastWatchedTime: lessonLastWatchedTime,
   });
 });
 
@@ -373,6 +403,7 @@ export const saveVideoProgress = asyncHandler(async (req, res) => {
 });
 
 export const markLessonComplete = asyncHandler(async (req, res) => {
+  const { currentTime, videoDuration } = req.body;
   const enrollment = await Enrollment.findOne({
     student: req.user._id,
     course: req.params.courseId,
@@ -383,10 +414,29 @@ export const markLessonComplete = asyncHandler(async (req, res) => {
     throw new Error('You are not enrolled in this course');
   }
 
-  const lesson = await Lesson.findById(req.params.lessonId);
+  const lesson = await Lesson.findOne({
+    _id: req.params.lessonId,
+    course: req.params.courseId,
+  });
   if (!lesson) {
     res.status(404);
     throw new Error('Lesson not found');
+  }
+
+  const watchedSeconds = Number(currentTime);
+  const durationSeconds = Number(videoDuration);
+  const completionThreshold = durationSeconds > 20
+    ? durationSeconds - 20
+    : Math.max(0, durationSeconds - 1);
+
+  if (
+    !Number.isFinite(watchedSeconds) ||
+    !Number.isFinite(durationSeconds) ||
+    durationSeconds <= 0 ||
+    watchedSeconds < completionThreshold
+  ) {
+    res.status(400);
+    throw new Error('Watch the video until the last 20 seconds before completing this lesson');
   }
 
   const alreadyCompleted = enrollment.completedLessons.some(
@@ -398,11 +448,16 @@ export const markLessonComplete = asyncHandler(async (req, res) => {
   }
 
   const totalLessons = await Lesson.countDocuments({ course: req.params.courseId });
-  enrollment.completionPercentage = Math.round(
-    (enrollment.completedLessons.length / totalLessons) * 100
-  );
+  const completedLessonCount = await Lesson.countDocuments({
+    _id: { $in: enrollment.completedLessons },
+    course: req.params.courseId,
+  });
+  enrollment.completionPercentage = totalLessons > 0
+    ? Math.round((completedLessonCount / totalLessons) * 100)
+    : 0;
 
-  if (enrollment.completionPercentage === 100) {
+  if (completedLessonCount === totalLessons && totalLessons > 0) {
+    const course = await Course.findById(req.params.courseId).select('isClosed');
     const quiz = await Quiz.findOne({ course: req.params.courseId });
 
     let quizPassed = true;
@@ -418,12 +473,12 @@ export const markLessonComplete = asyncHandler(async (req, res) => {
     if (quizPassed) {
       enrollment.isCompleted = true;
 
-      const existingCertificate = await Certificate.findOne({
+      const existingCertificate = course?.isClosed ? await Certificate.findOne({
         student: req.user._id,
         course: req.params.courseId,
-      });
+      }) : null;
 
-      if (!existingCertificate) {
+      if (course?.isClosed && !existingCertificate) {
         const shareToken = uuidv4();
         await Certificate.create({
           student: req.user._id,
@@ -550,15 +605,16 @@ export const submitQuiz = asyncHandler(async (req, res) => {
     attemptedAt: new Date(),
   });
 
+  const course = await Course.findById(req.params.courseId).select('isClosed');
   if (passed && enrollment.completionPercentage === 100) {
     enrollment.isCompleted = true;
 
-    const existingCertificate = await Certificate.findOne({
+    const existingCertificate = course?.isClosed ? await Certificate.findOne({
       student: req.user._id,
       course: req.params.courseId,
-    });
+    }) : null;
 
-    if (!existingCertificate) {
+    if (course?.isClosed && !existingCertificate) {
       const shareToken = uuidv4();
       await Certificate.create({
         student: req.user._id,
@@ -610,11 +666,11 @@ export const getQuizAttempts = asyncHandler(async (req, res) => {
 
 export const getMyCertificates = asyncHandler(async (req, res) => {
   const certificates = await Certificate.find({ student: req.user._id })
-    .populate('course', 'title thumbnail instructor duration category')
+    .populate('course', 'title thumbnail instructor duration category isClosed')
     .populate('student', 'name email')
     .sort({ createdAt: -1 });
 
-  res.status(200).json(certificates);
+  res.status(200).json(certificates.filter((certificate) => certificate.course?.isClosed));
 });
 
 export const getCertificateById = asyncHandler(async (req, res) => {
@@ -622,10 +678,10 @@ export const getCertificateById = asyncHandler(async (req, res) => {
     _id: req.params.id,
     student: req.user._id,
   })
-    .populate('course', 'title thumbnail instructor duration category')
+    .populate('course', 'title thumbnail instructor duration category isClosed')
     .populate('student', 'name email');
 
-  if (!certificate) {
+  if (!certificate || !certificate.course?.isClosed) {
     res.status(404);
     throw new Error('Certificate not found');
   }

@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Stripe from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
 import cloudinary from '../config/cloudinary.js';
 import User from '../models/User.js';
 import Course from '../models/Course.js';
@@ -127,7 +128,6 @@ export const getPublicProfile = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     instructor,
-    courses,
     totalStudents: totalStudents[0]?.total || 0,
     totalCourses: courses.length,
   });
@@ -356,6 +356,83 @@ export const requestPublish = asyncHandler(async (req, res) => {
   await course.save();
 
   res.status(200).json({ message: 'Publish request sent to admin for review' });
+});
+
+export const closeCourse = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({
+    _id: req.params.id,
+    instructor: req.user._id,
+  });
+
+  if (!course) {
+    res.status(404);
+    throw new Error('Course not found or not authorized');
+  }
+
+  course.isClosed = true;
+  await course.save();
+
+  // Remove certificates created by the previous automatic issuance flow.
+  await Certificate.deleteMany({ course: course._id });
+  await Enrollment.updateMany(
+    { course: course._id },
+    { $set: { certificateIssued: false } }
+  );
+
+  res.status(200).json({
+    message: 'Course closed. Issue certificates individually from the student roster.',
+  });
+});
+
+export const issueStudentCertificate = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({ _id: req.params.courseId, instructor: req.user._id });
+  if (!course) {
+    res.status(404);
+    throw new Error('Course not found or not authorized');
+  }
+  if (!course.isClosed) {
+    res.status(400);
+    throw new Error('Close the course before issuing certificates');
+  }
+
+  const enrollment = await Enrollment.findOne({
+    course: course._id,
+    student: req.params.studentId,
+  });
+  if (!enrollment) {
+    res.status(404);
+    throw new Error('Student is not enrolled in this course');
+  }
+  const totalLessons = await Lesson.countDocuments({ course: course._id });
+  const completedLessons = await Lesson.countDocuments({
+    _id: { $in: enrollment.completedLessons },
+    course: course._id,
+  });
+
+  if (totalLessons === 0 || completedLessons !== totalLessons) {
+    res.status(400);
+    throw new Error('Student must complete the course before receiving a certificate');
+  }
+
+  enrollment.isCompleted = true;
+  enrollment.completionPercentage = 100;
+
+  const existingCertificate = await Certificate.findOne({ student: enrollment.student, course: course._id });
+  if (existingCertificate) {
+    res.status(200).json({ message: 'Certificate already issued', certificate: existingCertificate });
+    return;
+  }
+
+  const certificate = await Certificate.create({
+    student: enrollment.student,
+    course: course._id,
+    certificateId: uuidv4(),
+    shareToken: uuidv4(),
+  });
+  enrollment.certificateIssued = true;
+  await enrollment.save();
+
+  res.status(201).json({ message: 'Certificate issued successfully', certificate });
 });
 
 export const addLesson = asyncHandler(async (req, res) => {
@@ -635,8 +712,6 @@ export const deleteQuiz = asyncHandler(async (req, res) => {
 });
 
 export const getEnrolledStudents = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-
   const course = await Course.findOne({
     _id: req.params.courseId,
     instructor: req.user._id,
@@ -650,15 +725,31 @@ export const getEnrolledStudents = asyncHandler(async (req, res) => {
   const total = await Enrollment.countDocuments({ course: course._id });
   const enrollments = await Enrollment.find({ course: course._id })
     .populate('student', 'name email avatar')
-    .select('student completionPercentage isCompleted createdAt')
-    .skip((page - 1) * limit)
-    .limit(Number(limit))
+    .select('student completedLessons completionPercentage isCompleted certificateIssued createdAt')
     .sort({ createdAt: -1 });
+
+  const totalLessons = await Lesson.countDocuments({ course: course._id });
+  await Promise.all(enrollments.map(async (enrollment) => {
+    const completedLessons = await Lesson.countDocuments({
+      _id: { $in: enrollment.completedLessons },
+      course: course._id,
+    });
+    const completionPercentage = totalLessons > 0
+      ? Math.round((completedLessons / totalLessons) * 100)
+      : 0;
+    const isCompleted = totalLessons > 0 && completionPercentage === 100;
+
+    if (enrollment.completionPercentage !== completionPercentage || enrollment.isCompleted !== isCompleted) {
+      enrollment.completionPercentage = completionPercentage;
+      enrollment.isCompleted = isCompleted;
+      await enrollment.save();
+    }
+  }));
 
   res.status(200).json({
     total,
-    page: Number(page),
-    totalPages: Math.ceil(total / limit),
+    page: 1,
+    totalPages: 1,
     enrollments,
   });
 });
@@ -800,25 +891,57 @@ export const getMyEarnings = asyncHandler(async (req, res) => {
 export const connectStripe = asyncHandler(async (req, res) => {
   const instructor = await User.findById(req.user._id);
 
-  const account = await stripe.accounts.create({
-    type: 'express',
-    email: instructor.email,
-    capabilities: {
-      transfers: { requested: true },
-    },
-  });
+  if (!instructor) {
+    res.status(404);
+    throw new Error('Instructor not found');
+  }
 
-  instructor.stripeAccountId = account.id;
-  await instructor.save();
+  let platformAccountId = 'unknown';
 
-  const accountLink = await stripe.accountLinks.create({
-    account: account.id,
-    refresh_url: `${process.env.CLIENT_URL}/instructor/stripe/refresh`,
-    return_url: `${process.env.CLIENT_URL}/instructor/stripe/success`,
-    type: 'account_onboarding',
-  });
+  try {
+    const platformAccount = await stripe.accounts.retrieve();
+    platformAccountId = platformAccount.id;
 
-  res.status(200).json({ url: accountLink.url });
+    const account = instructor.stripeAccountId
+      ? await stripe.accounts.retrieve(instructor.stripeAccountId)
+      : await stripe.accounts.create({
+          type: 'express',
+          email: instructor.email,
+          capabilities: {
+            transfers: { requested: true },
+          },
+        });
+
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${process.env.CLIENT_URL}/instructor/stripe/refresh`,
+      return_url: `${process.env.CLIENT_URL}/instructor/stripe/success`,
+      type: 'account_onboarding',
+    });
+
+    if (!instructor.stripeAccountId) {
+      instructor.stripeAccountId = account.id;
+      await instructor.save();
+    }
+
+    return res.status(200).json({ url: accountLink.url });
+  } catch (error) {
+    console.error('Stripe Connect error:', {
+      code: error.code,
+      type: error.type,
+      requestId: error.requestId,
+      message: error.message,
+    });
+
+    if (error.code === 'connect_not_enabled' || error.message?.includes('signed up for Connect')) {
+      res.status(503);
+      throw new Error(
+        `Stripe Connect is not enabled for platform account ${platformAccountId}. Enable Connect for this account, then restart the server. Stripe request: ${error.requestId || 'not available'}`
+      );
+    }
+    throw error;
+  }
+
 });
 
 export const getStripeStatus = asyncHandler(async (req, res) => {

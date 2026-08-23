@@ -16,6 +16,8 @@ import {
   updateCourse,
   deleteCourse,
   requestPublish,
+  closeCourse,
+  issueStudentCertificate,
   addLesson,
   updateLesson,
   deleteLesson,
@@ -92,6 +94,8 @@ router.get('/courses/:id', getCourseById);
 router.put('/courses/:id', uploadThumbnail.single('thumbnail'), updateCourse);
 router.delete('/courses/:id', deleteCourse);
 router.put('/courses/:id/publish-request', requestPublish);
+router.put('/courses/:id/close', closeCourse);
+router.post('/courses/:courseId/students/:studentId/certificate', issueStudentCertificate);
 
 router.post('/courses/:courseId/lessons', uploadVideo.single('video'), addLesson);
 router.put('/courses/:courseId/lessons/order', updateLessonOrder);

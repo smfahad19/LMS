@@ -22,6 +22,7 @@ const courseSchema = new mongoose.Schema(
         ratingCount: { type: Number, default: 0 },
         enrolledCount: { type: Number, default: 0 },
         isPublished: { type: Boolean, default: false },
+        isClosed: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

@@ -73,6 +73,8 @@ export default function Navbar() {
     ],
     student: [
       { label: 'Dashboard', to: '/student/dashboard' },
+      { label: 'Browse Courses', to: '/courses' },
+      { label: 'My Courses', to: '/student/my-courses' },
       { label: 'Profile', to: '/student/profile' },
     ],
   };
