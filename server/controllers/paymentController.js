@@ -1,11 +1,9 @@
 import asyncHandler from 'express-async-handler';
 import Stripe from 'stripe';
-import { v4 as uuidv4 } from 'uuid';
 import Course from '../models/Course.js';
 import Enrollment from '../models/Enrollment.js';
 import Payment from '../models/Payment.js';
-import Certificate from '../models/Certificate.js';
-import User from '../models/User.js';
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT) || 20;

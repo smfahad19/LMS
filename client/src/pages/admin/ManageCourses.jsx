@@ -31,11 +31,12 @@ export default function ManageCourses() {
   const page = Number(searchParams.get('page')) || 1;
   const isPublished = searchParams.get('isPublished') || '';
   const search = searchParams.get('search') || '';
+  const allCoursesLimit = 1000;
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const data = await getAllCourses({ page, isPublished, search, limit: 10 });
+      const data = await getAllCourses({ page: 1, isPublished, search, limit: allCoursesLimit });
       setCourses(data.courses);
       setTotal(data.total);
       setTotalPages(data.totalPages);
@@ -51,7 +52,7 @@ export default function ManageCourses() {
 
     const loadCourses = async () => {
       try {
-        const data = await getAllCourses({ page, isPublished, search, limit: 10 });
+        const data = await getAllCourses({ page: 1, isPublished, search, limit: allCoursesLimit });
         if (cancelled) return;
         setCourses(data.courses);
         setTotal(data.total);

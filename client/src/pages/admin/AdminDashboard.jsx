@@ -196,7 +196,7 @@ export default function AdminDashboard() {
                 <FiDollarSign size={15} className="text-gray-400" />
                 <h2 className="text-sm font-bold text-gray-900">Recent Payments</h2>
               </div>
-              <Link to="/admin/payments" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
+              <Link to="/admin/manage-payments" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
                 View all <FiChevronRight size={12} />
               </Link>
             </div>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
                 <FiBookOpen size={15} className="text-gray-400" />
                 <h2 className="text-sm font-bold text-gray-900">Top Courses</h2>
               </div>
-              <Link to="/admin/courses" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
+              <Link to="/admin/manage-courses" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
                 View all <FiChevronRight size={12} />
               </Link>
             </div>

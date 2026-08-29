@@ -1,4 +1,4 @@
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, res) => {
   console.error('ERROR:', err.message);
   console.error(err.stack);
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
