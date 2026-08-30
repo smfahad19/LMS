@@ -233,6 +233,8 @@ export const getCourseDetail = asyncHandler(async (req, res) => {
 
   let isEnrolled = false;
   let enrollment = null;
+  let userReview = null;
+  let certificate = null;
 
   if (req.user) {
     enrollment = await Enrollment.findOne({
@@ -240,9 +242,19 @@ export const getCourseDetail = asyncHandler(async (req, res) => {
       course: course._id,
     });
     isEnrolled = !!enrollment;
+
+    userReview = await Review.findOne({
+      student: req.user._id,
+      course: course._id,
+    }).populate('student', 'name avatar');
+
+    certificate = await Certificate.findOne({
+      student: req.user._id,
+      course: course._id,
+    });
   }
 
-  res.status(200).json({ course, reviews, isEnrolled, enrollment });
+  res.status(200).json({ course, reviews, isEnrolled, enrollment, userReview, certificate });
 });
 
 export const enrollFreeCourse = asyncHandler(async (req, res) => {

@@ -31,6 +31,8 @@ import StudentDashboard from './pages/student/StudentDashboard.jsx';
 import BrowseCourses from './pages/student/BrowseCourses.jsx';
 import Certificates from './pages/student/Certificates.jsx';
 import CourseDetail from './pages/public/CourseDetail.jsx';
+import About from './pages/public/About.jsx';
+import Blog from './pages/public/Blog.jsx';
 
 const getDashboardForRole = (role) => {
   if (role === 'admin') return '/admin/dashboard';
@@ -77,6 +79,8 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<PublicOnlyRoute><Home /></PublicOnlyRoute>} />
+          <Route path="/about" element={<PublicOnlyRoute><About /></PublicOnlyRoute>} />
+          <Route path="/blog" element={<PublicOnlyRoute><Blog /></PublicOnlyRoute>} />
           <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
 
@@ -167,9 +171,15 @@ function App() {
 
           {/* Student */}
           <Route path="/courses" element={
-            <BrowseCourses />
+            <ProtectedRoute allowedRoles={['student']}>
+              <BrowseCourses />
+            </ProtectedRoute>
           } />
-          <Route path="/courses/:id" element={<CourseDetail />} />
+          <Route path="/courses/:id" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <CourseDetail />
+            </ProtectedRoute>
+          } />
 
           <Route path="/student/certificates" element={
             <ProtectedRoute allowedRoles={['student']}>

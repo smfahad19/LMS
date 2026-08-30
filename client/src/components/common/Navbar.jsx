@@ -57,8 +57,8 @@ export default function Navbar() {
 
   const guestNavLinks = [
     { label: 'Home', to: '/' },
-    { label: 'Instructors', to: '/instructors' },
-    { label: 'Pricing', to: '/pricing' },
+    { label: 'About', to: '/about' },
+    { label: 'Blog', to: '/blog' },
   ];
 
   const roleNavLinks = {
