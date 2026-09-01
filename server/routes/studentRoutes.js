@@ -19,6 +19,7 @@ import {
   saveVideoProgress,
   markLessonComplete,
   getQuiz,
+  getQuizForCourse,
   submitQuiz,
   getQuizAttempts,
   getMyCertificates,
@@ -79,6 +80,7 @@ router.put('/courses/:courseId/lessons/:lessonId/progress', saveVideoProgress);
 router.post('/courses/:courseId/lessons/:lessonId/complete', markLessonComplete);
 
 router.get('/courses/:courseId/quiz/:quizId', getQuiz);
+router.get('/courses/:courseId/quiz-for-course', getQuizForCourse);
 router.post('/courses/:courseId/quiz/:quizId/submit', submitQuiz);
 router.get('/courses/:courseId/quiz-attempts', getQuizAttempts);
 

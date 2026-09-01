@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
-  FiBookOpen, FiAward, FiTrendingUp, FiClock,
-  FiChevronRight, FiPlay, FiStar, FiCheck
+  FiArrowRight,
+  FiAward,
+  FiBookOpen,
+  FiCheck,
+  FiClock,
+  FiPlay,
+  FiTrendingUp,
 } from 'react-icons/fi';
 import { toast } from 'sonner';
 import api from '../../services/api.js';
@@ -29,10 +34,10 @@ function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Loading dashboard...</p>
+          <div className="w-9 h-9 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-500">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -40,164 +45,141 @@ function StudentDashboard() {
 
   const statCards = [
     {
-      label: 'Enrolled Courses',
+      label: 'Enrolled',
       value: stats?.totalEnrolled || 0,
       icon: <FiBookOpen size={18} />,
-      iconBg: 'bg-blue-100 text-blue-600',
+      iconBg: 'bg-blue-50 text-blue-600',
       link: '/student/my-courses',
-      sub: 'Total courses',
     },
     {
       label: 'In Progress',
       value: stats?.inProgress || 0,
       icon: <FiClock size={18} />,
-      iconBg: 'bg-amber-100 text-amber-600',
+      iconBg: 'bg-amber-50 text-amber-600',
       link: '/student/my-courses?status=inprogress',
-      sub: 'Currently learning',
     },
     {
       label: 'Completed',
       value: stats?.completed || 0,
       icon: <FiCheck size={18} />,
-      iconBg: 'bg-emerald-100 text-emerald-600',
+      iconBg: 'bg-emerald-50 text-emerald-600',
       link: '/student/my-courses?status=completed',
-      sub: 'Finished courses',
     },
     {
       label: 'Certificates',
       value: stats?.totalCertificates || 0,
       icon: <FiAward size={18} />,
-      iconBg: 'bg-violet-100 text-violet-600',
+      iconBg: 'bg-violet-50 text-violet-600',
       link: '/student/certificates',
-      sub: 'Earned certificates',
     },
   ];
 
   const quickActions = [
-    { label: 'Browse Courses', to: '/courses', icon: <FiBookOpen size={15} />, desc: 'Find new courses' },
+    { label: 'Browse Courses', to: '/courses', icon: <FiBookOpen size={15} />, desc: 'Explore more' },
     { label: 'My Courses', to: '/student/my-courses', icon: <FiPlay size={15} />, desc: 'Continue learning' },
-    { label: 'Certificates', to: '/student/certificates', icon: <FiAward size={15} />, desc: 'View certificates' },
-    { label: 'My Profile', to: '/student/profile', icon: <FiTrendingUp size={15} />, desc: 'Update profile' },
+    { label: 'Certificates', to: '/student/certificates', icon: <FiAward size={15} />, desc: 'View credentials' },
+    { label: 'Profile', to: '/student/profile', icon: <FiTrendingUp size={15} />, desc: 'Update account' },
   ];
 
+  const continueLearning = stats?.recentEnrollments?.slice(0, 3) || [];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* Header */}
-      <div className="bg-slate-950 border-b border-slate-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-xl object-cover" />
-                ) : (
-                  <span className="text-white font-bold text-base">{user?.name?.charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-              <div>
-                <h1 className="text-lg font-bold">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
-                <p className="text-xs text-slate-300">Your learning space, all in one place</p>
-              </div>
-            </div>
-            <Link
-              to="/courses"
-              className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-2.5 rounded-xl text-sm font-semibold transition"
-            >
-              <FiBookOpen size={14} />
-              Browse Courses
-            </Link>
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Student dashboard</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              Welcome back, {user?.name?.split(' ')[0] || 'Student'}
+            </h1>
           </div>
+
+          <Link
+            to="/courses"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+          >
+            Browse courses
+            <FiArrowRight size={15} />
+          </Link>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {statCards.map((card, i) => (
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {statCards.map((card, index) => (
             <Link
-              key={i}
+              key={index}
               to={card.link}
-              className="bg-white border border-gray-200 rounded-2xl p-4 hover:border-blue-300 hover:shadow-sm transition"
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-sm"
             >
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${card.iconBg}`}>
+              <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${card.iconBg}`}>
                 {card.icon}
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0.5">{card.value}</p>
-              <p className="text-xs font-medium text-gray-700 mb-1">{card.label}</p>
-              <p className="text-xs text-gray-400">{card.sub}</p>
+              <p className="text-2xl font-bold tracking-tight text-slate-900">{card.value}</p>
+              <p className="mt-1 text-sm text-slate-600">{card.label}</p>
             </Link>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-
-          {/* Continue Learning */}
-          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="grid gap-6 lg:grid-cols-[1.5fr_0.9fr]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FiPlay size={15} className="text-gray-400" />
-                <h2 className="text-sm font-bold text-gray-900">Continue Learning</h2>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <FiPlay size={14} />
+                </div>
+                <h2 className="text-base font-semibold text-slate-900">Continue learning</h2>
               </div>
-              <Link to="/student/my-courses" className="text-xs text-blue-600 hover:underline flex items-center gap-0.5">
-                View all <FiChevronRight size={12} />
+              <Link to="/student/my-courses" className="text-sm font-medium text-blue-600 hover:underline">
+                View all
               </Link>
             </div>
-            <div className="divide-y divide-gray-50">
-              {stats?.recentEnrollments?.length > 0 ? (
-                stats.recentEnrollments.map((enrollment) => (
-                  <Link
-                    key={enrollment._id}
-                    to={`/student/courses/${enrollment.course?._id}`}
-                    className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition"
-                  >
-                    {enrollment.course?.thumbnail ? (
-                      <img
-                        src={enrollment.course.thumbnail}
-                        alt={enrollment.course.title}
-                        className="w-14 h-10 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="w-14 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                        <FiBookOpen size={16} className="text-gray-400" />
+
+            <div className="space-y-3">
+              {continueLearning.length > 0 ? (
+                continueLearning.map((enrollment) => {
+                  const course = enrollment.course;
+                  const progress = Math.min(100, Math.max(0, enrollment.completionPercentage || 0));
+
+                  return (
+                    <Link
+                      key={enrollment._id}
+                      to={`/student/courses/${course?._id}`}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 transition hover:border-blue-200 hover:bg-slate-50"
+                    >
+                      <div className="h-16 w-20 overflow-hidden rounded-xl bg-slate-100">
+                        {course?.thumbnail ? (
+                          <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-slate-400">
+                            <FiBookOpen size={20} />
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate mb-1">
-                        {enrollment.course?.title}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-32">
+
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center justify-between gap-3">
+                          <p className="truncate text-sm font-semibold text-slate-900">{course?.title || 'Course'}</p>
+                          <span className={`text-[10px] font-semibold ${enrollment.isCompleted ? 'text-emerald-600' : 'text-blue-600'}`}>
+                            {enrollment.isCompleted ? 'Completed' : 'Resume'}
+                          </span>
+                        </div>
+
+                        <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-100">
                           <div
-                            className="h-full bg-blue-600 rounded-full"
-                            style={{ width: `${enrollment.completionPercentage || 0}%` }}
+                            className={`h-full rounded-full ${enrollment.isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                            style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-400">{enrollment.completionPercentage || 0}%</span>
+
+                        <p className="text-xs text-slate-500">{Math.round(progress)}% complete</p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      {enrollment.isCompleted ? (
-                        <span className="text-xs px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full font-medium">
-                          Done
-                        </span>
-                      ) : (
-                        <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full font-medium">
-                          Resume
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                ))
+                    </Link>
+                  );
+                })
               ) : (
-                <div className="px-5 py-10 text-center">
-                  <FiBookOpen size={28} className="text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 mb-4">No courses yet</p>
-                  <Link
-                    to="/courses"
-                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-medium transition"
-                  >
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+                  <FiBookOpen size={26} className="mx-auto mb-3 text-slate-300" />
+                  <p className="text-sm text-slate-500">No courses yet</p>
+                  <Link to="/courses" className="mt-4 inline-flex rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                     Browse Courses
                   </Link>
                 </div>
@@ -205,110 +187,79 @@ function StudentDashboard() {
             </div>
           </div>
 
-          {/* Quiz Stats + Certificates */}
-          <div className="space-y-5">
-
-            {/* Quiz Stats */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <FiStar size={15} className="text-gray-400" />
-                <h2 className="text-sm font-bold text-gray-900">Quiz Stats</h2>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                  <FiAward size={15} />
+                </div>
+                <h2 className="text-base font-semibold text-slate-900">Performance</h2>
               </div>
+
               {stats?.quizStats?.totalAttempts > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Total Attempts</span>
-                    <span className="text-sm font-bold text-gray-900">{stats.quizStats.totalAttempts}</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Attempts</span>
+                    <span className="font-semibold text-slate-900">{stats.quizStats.totalAttempts}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Passed</span>
-                    <span className="text-sm font-bold text-emerald-600">{stats.quizStats.passed}</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Passed</span>
+                    <span className="font-semibold text-emerald-600">{stats.quizStats.passed}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Avg Score</span>
-                    <span className="text-sm font-bold text-blue-600">
-                      {Math.round(stats.quizStats.avgScore || 0)}%
-                    </span>
-                  </div>
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-400">Pass Rate</span>
-                      <span className="text-xs text-gray-500">
-                        {Math.round((stats.quizStats.passed / stats.quizStats.totalAttempts) * 100)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full"
-                        style={{ width: `${Math.round((stats.quizStats.passed / stats.quizStats.totalAttempts) * 100)}%` }}
-                      />
-                    </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Avg score</span>
+                    <span className="font-semibold text-blue-600">{Math.round(stats.quizStats.avgScore || 0)}%</span>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4">
-                  <FiStar size={24} className="text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">No quiz attempts yet</p>
-                </div>
+                <p className="py-3 text-sm text-slate-500">No quiz attempts yet.</p>
               )}
             </div>
 
-            {/* Recent Certificates */}
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <FiAward size={15} className="text-gray-400" />
-                  <h2 className="text-sm font-bold text-gray-900">Certificates</h2>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                  <FiAward size={15} />
                 </div>
-                <Link to="/student/certificates" className="text-xs text-blue-600 hover:underline">
-                  View all
-                </Link>
+                <h2 className="text-base font-semibold text-slate-900">Certificates</h2>
               </div>
-              <div className="p-5">
-                {stats?.totalCertificates > 0 ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
-                      <FiAward size={22} className="text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalCertificates}</p>
-                      <p className="text-xs text-gray-400">Certificates earned</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-2">
-                    <FiAward size={24} className="text-gray-300 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Complete a course to earn your first certificate</p>
-                  </div>
-                )}
-              </div>
+
+              {stats?.totalCertificates > 0 ? (
+                <div className="rounded-xl bg-amber-50 p-3">
+                  <p className="text-2xl font-bold text-slate-900">{stats.totalCertificates}</p>
+                  <p className="text-xs text-slate-500">Certificates earned</p>
+                </div>
+              ) : (
+                <p className="py-3 text-sm text-slate-500">Complete a course to earn your first certificate.</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <FiTrendingUp size={15} className="text-gray-400" />
-            <h2 className="text-sm font-bold text-gray-900">Quick Actions</h2>
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+              <FiTrendingUp size={15} />
+            </div>
+            <h2 className="text-base font-semibold text-slate-900">Quick actions</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-gray-100">
-            {quickActions.map((action, i) => (
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {quickActions.map((action, index) => (
               <Link
-                key={i}
+                key={index}
                 to={action.to}
-                className="flex flex-col items-center text-center p-5 hover:bg-gray-50 transition group"
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50"
               >
-                <div className="w-10 h-10 rounded-xl bg-gray-100 group-hover:bg-blue-50 flex items-center justify-center mb-3 transition text-gray-500 group-hover:text-blue-600">
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm">
                   {action.icon}
                 </div>
-                <p className="text-xs font-semibold text-gray-800 mb-1">{action.label}</p>
-                <p className="text-xs text-gray-400">{action.desc}</p>
+                <p className="text-sm font-semibold text-slate-900">{action.label}</p>
+                <p className="mt-1 text-xs text-slate-500">{action.desc}</p>
               </Link>
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

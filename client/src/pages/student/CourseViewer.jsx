@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { FiArrowLeft, FiAward, FiCheckCircle, FiClock, FiDownload, FiPlayCircle, FiStar } from 'react-icons/fi';
+import { FiArrowLeft, FiAward, FiCheckCircle, FiClock, FiDownload, FiPlayCircle, FiPrinter, FiStar, FiBookOpen } from 'react-icons/fi';
 import { toast } from 'sonner';
 import api from '../../services/api.js';
 import { getMediaUrl } from '../../utils/media.js';
@@ -23,10 +23,12 @@ export default function CourseViewer() {
   const [lastWatchedTime, setLastWatchedTime] = useState(0);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [enrollmentStatus, setEnrollmentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+  const [quiz, setQuiz] = useState(null);
 
   const loadCourseData = useCallback(async () => {
     try {
@@ -65,12 +67,19 @@ export default function CourseViewer() {
       setReviews(courseResponse.data.reviews || []);
       setUserReview(currentUserReview);
       setCertificate(courseCertificate);
+      setQuiz(courseResponse.data.quiz || null);
+      setEnrollmentStatus({
+        isCompleted: enrolledCourse.isCompleted,
+        completionPercentage: enrolledCourse.completionPercentage || 0,
+        certificateIssued: enrolledCourse.certificateIssued,
+      });
       setReviewForm({
         rating: currentUserReview?.rating || 5,
         comment: currentUserReview?.comment || '',
       });
       setCompletedLessons((enrolledCourse.completedLessons || []).map((lessonId) => String(lessonId)));
       setSelectedLesson(lessonWithVideo || null);
+      setLastWatchedTime(enrolledCourse.lastWatchedTime || 0);
       setLastWatchedTime(enrolledCourse.lastWatchedTime || 0);
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || 'Could not load course');
@@ -195,6 +204,11 @@ export default function CourseViewer() {
   }
 
   const lessons = [...(course.lessons || [])].sort((a, b) => a.order - b.order);
+  const totalLessons = lessons.length;
+  const completionProgress = totalLessons > 0
+    ? Math.round((completedLessons.length / totalLessons) * 100)
+    : 0;
+  const certificateEligible = Boolean(enrollmentStatus?.isCompleted || certificate || completionProgress >= 100);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -233,6 +247,34 @@ export default function CourseViewer() {
                     <FiCheckCircle size={15} /> {saving ? 'Saving...' : completedLessons.includes(String(selectedLesson._id)) ? 'Completed' : videoDuration > 0 && lastWatchedTime >= (videoDuration > 20 ? videoDuration - 20 : Math.max(0, videoDuration - 1)) ? 'Completing...' : 'Watch until last 20 seconds'}
                   </button>
                 </div>
+
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Course progress</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{completionProgress}% complete</p>
+                    </div>
+
+                    {certificate ? (
+                      <Link to={`/student/certificates?courseId=${courseId}`} className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-amber-600">
+                        View certificate
+                      </Link>
+                    ) : certificateEligible ? (
+                      <Link to={`/student/certificates?courseId=${courseId}`} className="rounded-xl bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100">
+                        Certificate ready
+                      </Link>
+                    ) : (
+                      <Link to={`/student/certificates?courseId=${courseId}`} className="rounded-xl bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
+                        Complete all lessons to unlock certificate
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-500" style={{ width: `${completionProgress}%` }} />
+                  </div>
+                </div>
+
                 {selectedLesson.resources?.length > 0 && (
                   <div className="mt-6 border-t border-gray-100 pt-5">
                     <h3 className="text-sm font-bold text-gray-900">Lesson resources</h3>
@@ -262,21 +304,93 @@ export default function CourseViewer() {
             <p className="mt-4 text-sm leading-7 text-gray-600">{course.description}</p>
           </div>
 
-          {certificate && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {certificate ? (
+            <Link to={`/student/certificates?courseId=${courseId}`} className="block overflow-hidden rounded-2xl border-2 border-amber-200 bg-[#fffdf7] p-5 shadow-sm transition hover:border-amber-300 print:border-0 print:shadow-none">
+              <div className="flex flex-col gap-4 border border-amber-200 bg-white/50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
                   <FiAward className="mt-0.5 text-amber-600" size={20} />
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Certificate</p>
-                    <h3 className="mt-1 text-lg font-bold text-amber-900">Your completion certificate is ready</h3>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Certificate issued</p>
+                    <h3 className="mt-1 text-lg font-bold text-amber-900">Certificate of completion</h3>
                   </div>
                 </div>
-                <Link to="/student/certificates" className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700">
-                  View certificate
-                </Link>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/student/certificates?courseId=${courseId}`}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+                  >
+                    View this certificate
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700"
+                  >
+                    <FiPrinter size={14} />
+                    Download PDF
+                  </button>
+                </div>
               </div>
-            </div>
+
+              <div className="mt-5 border border-amber-200 bg-white p-5 sm:p-7">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="h-2 w-16 bg-blue-600" />
+                  <FiAward size={32} className="text-amber-500" />
+                  <div className="h-2 w-16 bg-blue-600" />
+                </div>
+
+                <div className="mt-6 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-blue-700">Learnly Academy</p>
+                  <h4 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">Certificate of Completion</h4>
+                  <p className="mt-4 text-sm text-slate-500">This is to certify that</p>
+                  <p className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">{user?.name || 'Student'}</p>
+                  <p className="mt-4 text-sm text-slate-600">has successfully completed the course</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">{course.title}</p>
+                  <p className="mt-3 text-sm text-slate-600">
+                    under the guidance of <span className="font-semibold text-slate-900">{course.instructor?.name || 'Course Instructor'}</span>
+                  </p>
+                  <div className="mx-auto mt-5 h-px max-w-sm bg-amber-300" />
+                  <p className="mt-5 text-sm leading-6 text-slate-600">
+                    This certificate confirms that the learner completed all required lessons, projects, and assessments for this course.
+                  </p>
+                  <div className="mt-5 grid gap-3 text-left sm:grid-cols-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Course</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{course.title}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Instructor</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{course.instructor?.name || 'Course Instructor'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Issued</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{new Date(certificate.issuedAt || certificate.createdAt || Date.now()).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[11px] text-slate-500">Certificate ID: {certificate.certificateId}</p>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <Link to={`/student/certificates?courseId=${courseId}`} className="block rounded-2xl border border-blue-100 bg-blue-50 p-5 transition hover:bg-blue-100">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <FiAward className="mt-0.5 text-blue-600" size={20} />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Certificate condition</p>
+                    <h3 className="mt-1 text-lg font-bold text-blue-900">
+                      {completionProgress >= 100 || enrollmentStatus?.isCompleted
+                        ? 'You have completed the course. Certificate will appear here after approval.'
+                        : 'Complete all lessons and finish the required learning path to unlock your certificate.'}
+                    </h3>
+                  </div>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-blue-700">
+                  {completionProgress}% complete
+                </span>
+              </div>
+            </Link>
           )}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -357,6 +471,16 @@ export default function CourseViewer() {
               </button>
             ))}
           </div>
+
+          {quiz ? (
+            <div className="mt-6 border-t border-gray-200 pt-4">
+              <h3 className="px-2 text-sm font-bold text-gray-900">Final Assessment</h3>
+              <Link to={`/student/courses/${courseId}/quiz/${quiz._id}`} className="mt-3 flex w-full items-center gap-3 rounded-xl border-2 border-blue-200 bg-blue-50 px-3 py-3 text-left font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
+                <FiBookOpen size={16} />
+                <span className="min-w-0 flex-1 text-sm">{quiz.title || 'Quiz'}</span>
+              </Link>
+            </div>
+          ) : null}
         </aside>
       </div>
     </div>

@@ -7,8 +7,7 @@ const questionSchema = new mongoose.Schema(
     options: [{ type: String }], // mcq / true_false ke liy
     correctAnswer: { type: String, required: true },
     points: { type: Number, default: 1 },
-  },
-  { _id: false }
+  }
 );
 
 const quizSchema = new mongoose.Schema(

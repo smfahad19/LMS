@@ -226,6 +226,8 @@ export const getCourseDetail = asyncHandler(async (req, res) => {
     throw new Error('Course not found');
   }
 
+  const quiz = await Quiz.findOne({ course: course._id }).select('_id title passingScore maxAttempts');
+
   const reviews = await Review.find({ course: course._id })
     .populate('student', 'name avatar')
     .sort({ createdAt: -1 })
@@ -254,7 +256,7 @@ export const getCourseDetail = asyncHandler(async (req, res) => {
     });
   }
 
-  res.status(200).json({ course, reviews, isEnrolled, enrollment, userReview, certificate });
+  res.status(200).json({ course, quiz, reviews, isEnrolled, enrollment, userReview, certificate });
 });
 
 export const enrollFreeCourse = asyncHandler(async (req, res) => {
@@ -541,6 +543,16 @@ export const getQuiz = asyncHandler(async (req, res) => {
     throw new Error('Quiz not found');
   }
 
+  quiz.questions = (quiz.questions || []).map((question) => ({
+    ...question.toObject ? question.toObject() : question,
+    type: question.type || 'mcq',
+    options: Array.isArray(question.options) && question.options.length > 0
+      ? question.options
+      : question.type === 'true_false'
+        ? ['True', 'False']
+        : [],
+  }));
+
   const attempts = enrollment.quizAttempts.filter(
     (a) => a.quiz.toString() === quiz._id.toString()
   );
@@ -556,6 +568,26 @@ export const getQuiz = asyncHandler(async (req, res) => {
     maxAttempts: quiz.maxAttempts,
     passed: attempts.some((a) => a.passed),
   });
+});
+
+export const getQuizForCourse = asyncHandler(async (req, res) => {
+  const enrollment = await Enrollment.findOne({
+    student: req.user._id,
+    course: req.params.courseId,
+  });
+
+  if (!enrollment) {
+    res.status(403);
+    throw new Error('You are not enrolled in this course');
+  }
+
+  const quiz = await Quiz.findOne({ course: req.params.courseId }).select('_id title passingScore maxAttempts');
+
+  if (!quiz) {
+    return res.status(200).json({ quiz: null });
+  }
+
+  res.status(200).json({ quiz });
 });
 
 export const submitQuiz = asyncHandler(async (req, res) => {
@@ -590,18 +622,20 @@ export const submitQuiz = asyncHandler(async (req, res) => {
   let earnedPoints = 0;
   const results = [];
 
-  for (const question of quiz.questions) {
+  for (const [index, question] of quiz.questions.entries()) {
     totalPoints += question.points;
-    const studentAnswer = answers[question._id?.toString()];
-    const isCorrect =
-      studentAnswer?.toString().toLowerCase() === question.correctAnswer.toLowerCase();
+    const fallbackQuestionKey = question._id ? question._id.toString() : `question-${index}`;
+    const studentAnswer = answers?.[fallbackQuestionKey] ?? answers?.[`question-${index}`] ?? answers?.[index] ?? '';
+    const normalizedStudentAnswer = String(studentAnswer ?? '').trim().toLowerCase();
+    const normalizedCorrectAnswer = String(question.correctAnswer ?? '').trim().toLowerCase();
+    const isCorrect = normalizedStudentAnswer !== '' && normalizedStudentAnswer === normalizedCorrectAnswer;
 
     if (isCorrect) earnedPoints += question.points;
 
     results.push({
       questionText: question.questionText,
-      yourAnswer: studentAnswer || 'Not answered',
-      correctAnswer: question.correctAnswer,
+      yourAnswer: normalizedStudentAnswer ? normalizedStudentAnswer : 'Not answered',
+      correctAnswer: normalizedCorrectAnswer || 'Not set',
       isCorrect,
       points: question.points,
     });

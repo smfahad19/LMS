@@ -9,22 +9,14 @@ const socials = [
 ];
 
 const sharedFooterLinks = {
-  Platform: [
-    { label: 'Browse Courses', to: '/courses' },
-    { label: 'Instructors', to: '/instructors' },
-    { label: 'Pricing', to: '/pricing' },
-  ],
-  Company: [
-    { label: 'About Us', to: '/about' },
+  Explore: [
+    { label: 'Home', to: '/' },
+    { label: 'About', to: '/about' },
     { label: 'Blog', to: '/blog' },
-    { label: 'Careers', to: '/careers' },
-    { label: 'Contact', to: '/contact' },
   ],
-  Support: [
-    { label: 'Help Center', to: '/help' },
-    { label: 'Privacy Policy', to: '/privacy' },
-    { label: 'Terms of Service', to: '/terms' },
-    { label: 'Refund Policy', to: '/refund' },
+  Account: [
+    { label: 'Login', to: '/login' },
+    { label: 'Register', to: '/register' },
   ],
 };
 
@@ -62,19 +54,16 @@ export default function Footer() {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { pathname } = useLocation();
 
-  if (isAuthenticated && ['/admin/dashboard', '/instructor/dashboard', '/student/dashboard'].includes(pathname)) {
+  const publicRoutes = ['/', '/about', '/blog', '/login', '/register'];
+  const isPublicPage = publicRoutes.includes(pathname) || pathname.startsWith('/courses/') && !isAuthenticated;
+
+  if (!isPublicPage) {
     return null;
   }
 
   const footerLinks = isAuthenticated
     ? { ...(roleFooterLinks[user?.role] || {}), ...sharedFooterLinks }
-    : {
-        ...sharedFooterLinks,
-        Platform: [
-          ...sharedFooterLinks.Platform.map((link) => ({ ...link, to: '/register' })),
-          { label: 'Become an Instructor', to: '/register' },
-        ],
-      };
+    : { ...sharedFooterLinks };
 
   return (
     <footer className="bg-gray-50 border-t border-gray-200">

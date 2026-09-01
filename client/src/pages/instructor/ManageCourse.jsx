@@ -165,6 +165,22 @@ function ManageCourse() {
 
   const updateQuestion = (index, field, value) => {
     const updated = [...quizQuestions];
+
+    if (field === 'type') {
+      updated[index].type = value;
+      if (value === 'true_false') {
+        updated[index].options = ['True', 'False'];
+        updated[index].correctAnswer = 'true';
+      } else if (value === 'mcq') {
+        updated[index].options = updated[index].options?.length ? updated[index].options : ['', '', '', ''];
+        updated[index].correctAnswer = '';
+      } else {
+        updated[index].options = [];
+        updated[index].correctAnswer = '';
+      }
+      return setQuizQuestions(updated);
+    }
+
     updated[index][field] = value;
     setQuizQuestions(updated);
   };
